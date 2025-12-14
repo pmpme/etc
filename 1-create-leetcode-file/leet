@@ -1,0 +1,138 @@
+#!/bin/bash
+
+DEBUG=0 # 1 for true, 0 for false
+PREFIX=$1
+CATEGORY=$2
+URL=$3
+
+# ===== For testing only
+if [ "$DEBUG" -eq 1 ] && [ -z "$PREFIX" ]; then
+    PREFIX=p001
+fi
+if [ "$DEBUG" -eq 1 ] && [ -z "$CATEGORY" ]; then
+    CATEGORY="Array/String"
+fi
+if [ "$DEBUG" -eq 1 ] && [ -z "$URL" ]; then
+    URL="https://leetcode.com/problems/merge-sorted-array/?envType=study-plan-v2&envId=top-interview-150"
+fi
+
+# ===== Ensure user passes in <PREFIX> <CATEGORY> <URL>
+if [ -z "$PREFIX" ] || [ -z "$CATEGORY" ] || [ -z "$URL" ]; then
+    echo -e "\n🚨 Please try again!"
+    echo "Usage: leet <PREFIX> <CATEGORY> <LEETCODE_URL> "
+    echo "Ex:    leet p001 arraystring https://leetcode.com/problems/merge-sorted-array/"
+    echo -e "\n"
+    exit
+fi
+CATEGORY=$(echo $CATEGORY | tr -cd '[:alnum:]_-' | tr '[:upper:]' '[:lower:]')
+
+# ===== Get problem number and name
+PROBLEM_URL=$(echo $URL | sed 's#^\(.*/problems/[^/]*/\).*#\1#')
+URLSLUG=$(echo $URL | sed -E  's#.*/problems/([^/?]+).*#\1#')
+RESPONSE=$(curl -s 'https://leetcode.com/graphql' \
+  -H 'Content-Type: application/json' \
+  -d "{\"query\":\"{ question(titleSlug:\\\"$URLSLUG\\\") { questionId title }}\"}"
+)
+PROBLEM_ID=$(echo $RESPONSE | jq -r '.data.question.questionId')
+PROBLEM_NAME=$(echo $RESPONSE | jq -r '.data.question.title')
+
+if [ "$PROBLEM_ID" = "null" ] || [ -z "$PROBLEM_ID" ] || [ "$PROBLEM_NAME" = "null" ] || [ -z "$PROBLEM_NAME" ]; then
+    echo "🚨 Could not fetch problem info. Check your URL."
+    echo $RESPONSE
+    exit 1
+fi
+
+# ===== Create file if doesn't exist
+FILEPATH="$PREFIX-$PROBLEM_ID-$URLSLUG--$CATEGORY.py"
+if [ -f "$FILEPATH" ]; then
+    echo "⚠️  File $FILEPATH already exists" 
+    echo -e "\n"
+    exit
+else
+    echo "#!/usr/bin/python3" > "$FILEPATH"
+    echo "# $PROBLEM_ID. $PROBLEM_NAME" >> "$FILEPATH"
+    echo "# $PROBLEM_URL" >> "$FILEPATH"
+    echo "from typing import List" >> "$FILEPATH"
+    echo -e "\n\n" >> "$FILEPATH"
+    echo '"""' >> "$FILEPATH"
+    echo -e '\n' >> "$FILEPATH"
+    echo '"""' >> "$FILEPATH"
+    echo -e "✅ Created file $FILEPATH\n"
+    # chmod +x "$FILEPATH"
+fi
+
+# ===== Print values for reference
+if [ "$DEBUG" -eq 1 ]; then
+    echo -e '\n\n--- Reference ---'
+    echo DEBUG="$DEBUG"
+    echo URL="$URL"
+    echo PROBLEM_URL="$PROBLEM_URL"
+    echo PROBLEM_URL="$PROBLEM_URL"
+    echo RESPONSE="$RESPONSE"
+    echo PROBLEM_ID="$PROBLEM_ID"
+    echo URLSLUG="$URLSLUG"
+    echo FILEPATH="$FILEPATH"
+    echo FILEPATH="$FILEPATH"
+fi
+
+# ===== Output Reference
+# ❯ bash leet p001 "Array/String" https://leetcode.com/problems/merge-sorted-array/description/\?envType\=study-plan-v2\&envId\=top-interview-150
+# ✅ Created file p001-88-merge-sorted-array--arraystring.py
+# ❯ 
+
+# ===== Notes
+: <<'END_COMMENT'
+Reference - sed pattern for <PROBLEM_URL>
+-----------------------------------------
+'s#OLD#NEW#'
+'s#\(\)#\1#' -> () to group, 1 as grouped, \'s to escape
+'s#\(/problems/\)#\1#' -> find '/problems/'
+     ----------
+'s#^\(.*/problems/\)#\1#' -> from the start (^) match all (.*) until /problems/
+   -  --
+'s#^\(.*/problems/[^/]*/\)#\1#' -> from /problems/ match all except (/), then up until (/), ([^/]*/)
+                  ------
+'s#^\(.*/problems/[^/]*/\).*#\1#' -> take remainder of url to be replaced by grouped content at (1) 
+
+Reference - sed pattern for <URLSLUG> (with the `-E` flag!!)
+------------------------------------------------------------
+sed -E  's#.*/problems/([^/?]+).*#\1#' 
+           ------------        --        (ignore everything before and after the matched group)
+                        ------           (match/group 1 or more characters which is not / or ?)
+
+Reference - curl params
+-----------------------
+❯ curl -s 'https://leetcode.com/graphql' \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"{ question(titleSlug:\"merge-sorted-array\") { questionId title }}"}'
+
+{"data":{"question":{"questionId":"88","title":"Merge Sorted Array"}}}%  
+
+Reference - curl output jq
+--------------------------
+
+❯ curl -s 'https://leetcode.com/graphql' \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"{ question(titleSlug:\"merge-sorted-array\") { questionId title }}"}' | jq
+{
+  "data": {
+    "question": {
+      "questionId": "88",
+      "title": "Merge Sorted Array"
+    }
+  }
+}
+
+Reference - tr to normalize <CATEGORY>
+tr -cd '[:alnum:]_-' | tr '[:upper:]' '[:lower:]'
+tr                      => translate
+-cd                     => complement and delete
+'[:alnum:]_-'           => alphanumeric, underscore, dash
+'[:upper:]' '[:lower:]  => lowercase output
+
+Reference - symlink to ~/bin
+----------------------------
+ln -s $(pwd)/leet ~/bin/leet
+chmod +x ~/bin/leet
+ 
+END_COMMENT
