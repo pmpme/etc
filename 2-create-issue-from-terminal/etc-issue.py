@@ -177,5 +177,6 @@ if __name__ == "__main__":
 """
 ❯ cat ~/bin/etc-issue
 #!/bin/bash
-uv run python $HOME/code/pmpme/etc/etc-issue.py "$@"
+uv run $HOME/code/pmpme/etc/.venv/bin/python $HOME/code/pmpme/etc/2-create-issue-from-terminal/etc-issue.py "$@"
+❯ 
 """
