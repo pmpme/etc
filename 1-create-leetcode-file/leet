@@ -53,6 +53,7 @@ else
     echo "# $PROBLEM_ID. $PROBLEM_NAME" >> "$FILEPATH"
     echo "# $PROBLEM_URL" >> "$FILEPATH"
     echo "from typing import List" >> "$FILEPATH"
+    echo "import pdb" >> "$FILEPATH"
     echo -e "\n\n" >> "$FILEPATH"
     echo '"""' >> "$FILEPATH"
     echo -e '\n' >> "$FILEPATH"
