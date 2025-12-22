@@ -5,6 +5,7 @@ import pdb
 import requests
 import sys
 import time
+import argparse
 from dotenv import load_dotenv
 from datetime import date, datetime
 from pprint import pprint
@@ -42,6 +43,8 @@ class Issues:
         issues_data = issues_resp.json()
 
         for raw_data in issues_data:
+            if "pull_request" in raw_data:
+                continue
             issue_num = raw_data.get('number')
             issue_title = raw_data.get('title')
             issue_state = raw_data.get('state')
@@ -75,6 +78,23 @@ class Issues:
         print(f"[{datetime.now()}] Reference: https://github.com/pmpme/etc/issues/{issue_number}")
 
         return issue_number
+
+    def rename_issue(self, number:int, new_title:str) -> int:
+        if number not in self.issues:
+            raise KeyError(f"Issue #{number} not found")
+
+        update_url = f"{REPO_URL}/issues/{number}"
+        data = { "title": new_title }
+
+        response = requests.patch(update_url, headers=HEADERS, json=data)
+        response.raise_for_status()
+        old_title, _ = self.issues[number]
+        print(f"[{datetime.now()}] Renamed #{number}")
+        print(f"\tOld title: '{old_title}'")
+        print(f"\tNew title '{new_title}'")
+        print(f"\tLink: https://github.com/{OWNER}/{REPO}/issues/{number}")
+
+        return number
 
 
     def close_issues_not_planned(self, *args: int) -> None:
@@ -153,26 +173,52 @@ class Issues:
 
 
 if __name__ == "__main__":
+    # ---- Process arguments
+    parser = argparse.ArgumentParser(
+        description="Manage daily issues in Github repo pmpme/etc",
+        prog="etc-issue"
+    )
+
+    subparsers = parser.add_subparsers(dest="command")
+
+    # 1. Create command
+    create_parser = subparsers.add_parser("create", help="Create a new issue")
+    create_parser.add_argument("title", help="Title of new issue (in quotes)")
+
+    # 2. Rename command
+    rename_parser = subparsers.add_parser("rename", help="Rename an existing issue")
+    rename_parser.add_argument("number", type=int, help="Issue number to rename")
+    rename_parser.add_argument("new_title", help="New title for the issue")
+
+    # Default: If no arguments passed in, treat as --list
+    args = parser.parse_args()
+
+    # ---- Process commands
     issues = Issues()
     today_str = date.today().strftime("%m-%d-%Y")
 
-    # [PRINT OPEN ISSUES] if no args or too many args provided
-    if len(sys.argv) == 1 or len(sys.argv) > 2:
+    # Create new issue
+    if args.command == "create":
+        message = f"🚀 Creating new issue '{args.title}'"
+        print(f"\n{message}\n")
+        print("=" * len(message) + "\n")
+        new_issue_num = issues.create_issue(args.title)
+        print(f"\n🎉 #{new_issue_num} created")
+    elif args.command == "rename":
+        message = f"🔄 Renaming issue #{args.number} to '{args.new_title}'"
+        print(f"\n{message}")
+        print("=" * len(message) + "\n")
+        updated_issue_num = issues.rename_issue(args.number, args.new_title)
+        print(f"\n🎉 #{updated_issue_num} title renamed to '{args.new_title}'")
+
+    else:
         message = f"[{datetime.now()}] Open Tickets in {OWNER}/{REPO}: {len(issues.get_open_tickets())}"
         print(f"\n{message}")
         print("=" * len(message) + "\n")
         issues.print_table()
         print("=" * len(message) + "\n")
-        print("To create a new issue ➡️ $ etc-issue \"title of your issue (in quotes)\"\n")
-        sys.exit(0)
+        parser.print_usage()
 
-    # [CREATE NEW ISSUE] if title provided
-    if len(sys.argv) == 2:
-        issue_title = sys.argv[1]
-        print(f"\n🚀 Starting [etc-issue] {today_str} '{issue_title}'")
-        print("===================================================\n")
-        new_issue_num = issues.create_issue(issue_title)
-        sys.exit(0)    
 
 """
 ❯ cat ~/bin/etc-issue
@@ -190,4 +236,6 @@ Other stuff, archive for now
 # ---- Close issues with title
 # issues.close_issues_not_planned_title(issue_title)
 # issues.close_issues_not_planned_title(f"{today_str} | TBD")
+
+# 🚫
 """
