@@ -43,6 +43,8 @@ class Issues:
         issues_data = issues_resp.json()
 
         for raw_data in issues_data:
+            if "pull_request" in raw_data:
+                continue
             issue_num = raw_data.get('number')
             issue_title = raw_data.get('title')
             issue_state = raw_data.get('state')
