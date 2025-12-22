@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
+    "pyperclip>=1.11.0",
     "python-dotenv>=1.2.1",
     "requests>=2.32.5",
     "urllib3<2",

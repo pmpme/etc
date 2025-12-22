@@ -6,6 +6,7 @@ import requests
 import sys
 import time
 import argparse
+import pyperclip
 from dotenv import load_dotenv
 from datetime import date, datetime
 from pprint import pprint
@@ -190,6 +191,11 @@ if __name__ == "__main__":
     rename_parser.add_argument("number", type=int, help="Issue number to rename")
     rename_parser.add_argument("new_title", help="New title for the issue")
 
+    # 3. Link command
+    link_parser = subparsers.add_parser("link", help="Print the Github URL for an issue")
+    link_parser.add_argument("number", type=int, help="Issue number")
+
+
     # Default: If no arguments passed in, treat as --list
     args = parser.parse_args()
 
@@ -210,7 +216,16 @@ if __name__ == "__main__":
         print("=" * len(message) + "\n")
         updated_issue_num = issues.rename_issue(args.number, args.new_title)
         print(f"\n🎉 #{updated_issue_num} title renamed to '{args.new_title}'")
-
+    elif args.command == "link":
+        try:
+            title, state = issues.get_issue(args.number)
+            print(f"\nIssue #{args.number}: {title} ({state})")
+            url = f"https://github.com/{OWNER}/{REPO}/issues/{args.number}"
+            pyperclip.copy(url)
+            print(f"Url: {url} (🎉 copied to clipboard!)")
+        except KeyError:
+            print(f"Error: Issue #{args.number} not found")
+            sys.exit(1)
     else:
         message = f"[{datetime.now()}] Open Tickets in {OWNER}/{REPO}: {len(issues.get_open_tickets())}"
         print(f"\n{message}")
