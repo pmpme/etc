@@ -1,17 +1,19 @@
-# Get BTC Price
+# Create Issue from Terminal
 
-## Output Reference
+## List open issues
 
 ```
-❯ cd $HOME
-❯ ll ~/bin/btc | awk '{ print $1 }'
--rwxr-xr-x@
-❯ cat ~/bin/btc
+❯ etc-issue
 
-uv run $HOME/code/pmpme/etc/.venv/bin/python $HOME/code/pmpme/etc/3-get-btc-price/btc.py
+[2025-12-22 04:58:30.156224] Open Tickets in pmpme/etc: 6
+=========================================================
 
+#  | TITLE                                                                               | STATE
+------------------------------------------------------------------------------------------------
+42 | [etc-issue] option to only print open issues                                        | open
+41 | [leet] increment existing prefix and take existin suffix if not otherwise specified | open
+...
+=========================================================
 
-❯ btc
-₿ ➡️  $87,123
-~ ❯
+To create a new issue ➡️ $ etc-issue "title of your issue"
 ```
