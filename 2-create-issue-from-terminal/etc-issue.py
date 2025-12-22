@@ -155,28 +155,39 @@ class Issues:
 if __name__ == "__main__":
     issues = Issues()
     today_str = date.today().strftime("%m-%d-%Y")
-    issue_title = sys.argv[1] if len(sys.argv) == 2 else f"{today_str} | TBD"
-    print(f"\n🚀 Starting [etc-issue] {today_str} '{issue_title}'")
-    print("===================================================\n")
 
-    # ---- Create new issue
-    new_issue_num = issues.create_issue(issue_title)
+    # [PRINT OPEN ISSUES] if no args or too many args provided
+    if len(sys.argv) == 1 or len(sys.argv) > 2:
+        message = f"[{datetime.now()}] Open Tickets in {OWNER}/{REPO}: {len(issues.get_open_tickets())}"
+        print(f"\n{message}")
+        print("=" * len(message) + "\n")
+        issues.print_table()
+        print("=" * len(message) + "\n")
+        print("To create a new issue ➡️ $ etc-issue \"title of your issue (in quotes)\"\n")
+        sys.exit(0)
 
-    # ---- Close issues by numbers
-    # issues.close_issues_not_planned(11, 12)
-
-    # ---- Close issues with title
-    # issues.close_issues_not_planned_title(issue_title)
-    # issues.close_issues_not_planned_title(f"{today_str} | TBD")
-
-    # ---- TESTING
-    print(f"[{datetime.now()}] Open Tickets: {len(issues.get_open_tickets())}\n")
-    issues.print_table()
-    print("===================================================\n")
+    # [CREATE NEW ISSUE] if title provided
+    if len(sys.argv) == 2:
+        issue_title = sys.argv[1]
+        print(f"\n🚀 Starting [etc-issue] {today_str} '{issue_title}'")
+        print("===================================================\n")
+        new_issue_num = issues.create_issue(issue_title)
+        sys.exit(0)    
 
 """
 ❯ cat ~/bin/etc-issue
 #!/bin/bash
 uv run $HOME/code/pmpme/etc/.venv/bin/python $HOME/code/pmpme/etc/2-create-issue-from-terminal/etc-issue.py "$@"
 ❯ 
+"""
+
+"""
+Other stuff, archive for now
+
+# ---- Close issues by numbers
+# issues.close_issues_not_planned(11, 12)
+
+# ---- Close issues with title
+# issues.close_issues_not_planned_title(issue_title)
+# issues.close_issues_not_planned_title(f"{today_str} | TBD")
 """
