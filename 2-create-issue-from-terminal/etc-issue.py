@@ -217,6 +217,7 @@ if __name__ == "__main__":
         print("=" * len(message) + "\n")
         issues.print_table()
         print("=" * len(message) + "\n")
+        parser.print_usage()
 
 
 """
